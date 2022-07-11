@@ -1,0 +1,11 @@
+{
+    "channel_id": 953475156645412927,
+    "message": "REACT FOR ROLES SAMPLE MESSAGE",
+    "roles": [
+        {
+            "name": "Movies",
+            "id": 995976937996566549,
+            "reaction": ":movie_camera:"
+        }
+    ]
+}
