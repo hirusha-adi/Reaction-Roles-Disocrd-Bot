@@ -24,122 +24,108 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
+import discord
+import asyncio
 import json
 import os
-import platform
-import time
-from datetime import datetime
-
-import discord
 from discord.ext import commands
 
-
-class Settings:
-    """
-    open the settings.json file and load settings
-    """
-    with open(os.path.join(os.getcwd(), 'settings.json'), 'r', encoding='utf-8') as _token_file:
-        _data = json.load(_token_file)
-    channel_id = _data['channel_id']
-    log_channel_id = _data['log_channel_id']
-    server_id = _data['server_id']
-    message = _data['message']
-    roles = _data['roles']
+bot = commands.Bot(command_prefix='?')
 
 
-client = commands.Bot(
-    command_prefix=",",
-    intents=discord.Intents.all()
-)
-
-
-# store all the reaction role emojis
-ROLE_ICONS = []
-for role in Settings.roles:
-    ROLE_ICONS.append(role['reaction'])
-
-
-def check(reaction, user):
-    """
-    check if the reaction is a valid emoji
-    """
-    return str(reaction.emoji) in ROLE_ICONS
-
-
-@client.event
+@bot.event
 async def on_ready():
-    """
-    The on_reaction_add event is a little limited, 
-    because it is only triggered by messages that are stored 
-    in the Client.messages dequeue. 
-    This is a cache (default size 5000) that stops your bot 
-    from responding to activity on old messages. 
-    There's no guarantee if you restart your bot that 
-    it will still be "watching" that message.
+    print("Bot Is Now Online!")
 
-    the thing you could do is send a message when your bot logs in, 
-    and add the role to users who react to that message
-    """
 
-    # Notify that the bot is logged in
-    print(f'Discord.py API version: {discord.__version__}')
-    print(f'Python version: {platform.python_version()}')
-    print(f'Logged in as {client.user} | {client.user.id}')
-    global start_time
-    start_time = time.time()
+@bot.command(name="selfrole")
+async def self_role(ctx):
 
-    # change the bot precense
-    await client.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=f"teamsds.net"
-        )
-    )
+    emojis = answers[1].split(" ")
+    roles = answers[2].split(" ")
+    c_id = int(answers[3][2:-1])
+    channel = bot.get_channel(c_id)
 
-    print("Bot is ready to be used!")
+    bot_msg = await channel.send(answers[0])
 
-    # Get the channel, log channel and server
-    channel = client.get_channel(Settings.channel_id)
-    log_channel = client.get_channel(Settings.log_channel_id)
-    guild = client.get_guild(Settings.server_id)
-    if guild is None:  # if guild not in cache
-        guild = await client.fetch_guild(Settings.server_id)
+    with open("reactions.json", "r") as f:
+        self_roles = json.load(f)
 
-    # Send the text message to channel
-    text = Settings.message
-    message = await channel.send(text)
-    await log_channel.send(f"`{datetime.now()}` - Sent the message to <#{Settings.channel_id}>")
+    self_roles[str(bot_msg.id)] = {}
+    self_roles[str(bot_msg.id)]["emojis"] = emojis
+    self_roles[str(bot_msg.id)]["roles"] = roles
 
-    # Add all reactions specified in settings.json to the sent message
-    for role in Settings.roles:
-        await message.add_reaction(role['reaction'])
-    await log_channel.send(f"`{datetime.now()}` - Added all reactions to the message")
+    with open("reactions.json", "w") as f:
+        json.dump(self_roles, f)
 
-    while True:
-        # Wait for user reaction (asynchronously)
-        reaction, user = await client.wait_for("reaction_add", check=check)
+    for emoji in emojis:
+        await bot_msg.add_reaction(emoji)
 
-        for role in Settings.roles:  # loop through all roles in settings.json
-            if str(reaction.emoji) == role['reaction']:
 
-                # Get the role and user properly
-                role_obj = discord.utils.get(guild.roles, name=role['name'])
-                user = discord.utils.get(
-                    guild.members,
-                    name=f'{str(user).split("#")[0]}',
-                    discriminator=f'{str(user).split("#")[-1]}'
-                )
+@bot.event
+async def on_raw_reaction_add(payload):
+    msg_id = payload.message_id
 
-                # Add role to the user
-                try:
-                    await user.add_roles(role_obj)
-                except Exception as e:
-                    await log_channel.send(f"`{datetime.now()}` - Error adding {role['name']} role to <@{user.id}>: {e}")
+    with open("reactions.json", "r") as f:
+        self_roles = json.load(f)
 
-                await log_channel.send(f"`{datetime.now()}` - Added {role['name']} role to <@{user.id}>")
+    if payload.member.bot:
+        return
+
+    if str(msg_id) in self_roles:
+        emojis = []
+        roles = []
+
+        for emoji in self_roles[str(msg_id)]['emojis']:
+            emojis.append(emoji)
+
+        for role in self_roles[str(msg_id)]['roles']:
+            roles.append(role)
+
+        guild = bot.get_guild(payload.guild_id)
+
+        for i in range(len(emojis)):
+            choosed_emoji = str(payload.emoji)
+            if choosed_emoji == emojis[i]:
+                selected_role = roles[i]
+
+                role = discord.utils.get(guild.roles, name=selected_role)
+
+                await payload.member.add_roles(role)
+                await payload.member.send(f"You Got {selected_role} Role!")
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    msg_id = payload.message_id
+
+    with open("reactions.json", "r") as f:
+        self_roles = json.load(f)
+
+    if str(msg_id) in self_roles:
+        emojis = []
+        roles = []
+
+        for emoji in self_roles[str(msg_id)]['emojis']:
+            emojis.append(
+                emoji)
+
+        for role in self_roles[str(msg_id)]['roles']:
+            roles.append(role)
+
+        guild = bot.get_guild(payload.guild_id)
+
+        for i in range(len(emojis)):
+            choosed_emoji = str(payload.emoji)
+            if choosed_emoji == emojis[i]:
+                selected_role = roles[i]
+                role = discord.utils.get(guild.roles, name=selected_role)
+                member = await(guild.fetch_member(payload.user_id))
+                if member is not None:
+                    await member.remove_roles(role)
+
 
 if __name__ == "__main__":
     # open the token.txt, load the token, run the discord bot
     with open(os.path.join(os.getcwd(), 'token.txt'), 'r', encoding='utf-8') as _token_file:
-        client.run(_token_file.read())
+        bot.run(_token_file.read())
