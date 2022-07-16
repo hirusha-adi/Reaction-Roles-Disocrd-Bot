@@ -39,19 +39,16 @@ simple reaction roles bot discord made with discord.py
     ```json
     {
         "channel_id": 12345,
-        "server_id": 12345,
         "log_channel_id": 12345,
         "message": "text",
         "roles": [
             {
-                "name": "text",
-                "id": 12345,
-                "reaction": "🎥"
+                "role": "text",
+                "emoji": "🎥"
             },
             {
-                "name": "text2",
-                "id": 12345,
-                "reaction": "🎵"
+                "role": "text2",
+                "emoji": "🎵"
             }
         ]
     }
@@ -71,16 +68,7 @@ simple reaction roles bot discord made with discord.py
         <td>integer</td>
         <td>The discord channel ID to send the text</td>
     </tr>
-    <tr>
-        <td>server_id</td>
-        <td>integer</td>
-        <td>The discord server ID to setup</td>
-    </tr>
-    <tr>
-        <td>log_channel_id</td>
-        <td>integer</td>
-        <td>The discord channel ID to send the log of reaction roles</td>
-    </tr>
+    
     <tr>
         <td>log_channel_id</td>
         <td>integer</td>
@@ -92,17 +80,17 @@ simple reaction roles bot discord made with discord.py
         <td>The message to send to channel_id in server_id discord server, the reactions will be added to this message</td>
     </tr>
     <tr>
-        <td>roles[x].name</td>
+        <td>presence</td>
+        <td>string</td>
+        <td>The precence of the discord bot. (Watching)</td>
+    </tr>
+    <tr>
+        <td>roles[i].role</td>
         <td>string</td>
         <td>Name of the discord role</td>
     </tr>
     <tr>
-        <td>roles[x].id</td>
-        <td>string</td>
-        <td>ID of the discord role</td>
-    </tr>
-    <tr>
-        <td>roles[x].reaction</td>
+        <td>roles[i].emoji</td>
         <td>string</td>
         <td>The emoji to react to for this role to message</td>
     </tr>
@@ -116,3 +104,9 @@ simple reaction roles bot discord made with discord.py
     ```
     python3 bot.py
     ```
+
+7. Open discord, go to any channel in the server with the specified channel in `settings.json`'s `channel_id` and send
+    ```
+    ?selfrole
+    ```
+    to make the bot function as intended
