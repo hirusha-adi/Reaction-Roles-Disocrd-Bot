@@ -1,1 +1,12 @@
-{"884421750132187156": {"emojis": ["\ud83d\udfe5", "\ud83d\udfe6"], "roles": ["Red", "Blue"]}, "997908105100800121": {"emojis": ["\ud83c\udfa5", "\ud83c\udfa7"], "roles": ["Movies", "Music"]}}
+{
+    "884421750132187156": {
+        "emojis": [
+            "\ud83d\udfe5",
+            "\ud83d\udfe6"
+        ],
+        "roles": [
+            "Red",
+            "Blue"
+        ]
+    }
+}
